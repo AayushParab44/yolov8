@@ -14,6 +14,7 @@ import numpy as np
 import psutil
 from torch.utils.data import Dataset
 from tqdm import tqdm
+from skimage.transform import resize as skresize
 
 from ..utils import DEFAULT_CFG, LOCAL_RANK, LOGGER, NUM_THREADS, TQDM_BAR_FORMAT
 from .utils import HELP_URL, IMG_FORMATS
@@ -154,8 +155,10 @@ class BaseDataset(Dataset):
             r = self.imgsz / max(h0, w0)  # ratio
             if r != 1:  # if sizes are not equal
                 interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
-                im = cv2.resize(im, (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz)),
-                                interpolation=interp)
+                # im = cv2.resize(im, (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz)),
+                #                 interpolation=interp)
+                im = skresize(im, (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz))
+                              ) #skimage
 
             # Add to buffer if training with augmentations
             if self.augment:

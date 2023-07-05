@@ -5,6 +5,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import torch
+from skimage.transform import resize as skresize
 
 from ultralytics.yolo.data import YOLODataset
 from ultralytics.yolo.data.augment import Compose, Format, v8_transforms
@@ -32,7 +33,8 @@ class RTDETRDataset(YOLODataset):
                 if im is None:
                     raise FileNotFoundError(f'Image Not Found {f}')
             h0, w0 = im.shape[:2]  # orig hw
-            im = cv2.resize(im, (self.imgsz, self.imgsz), interpolation=cv2.INTER_LINEAR)
+            # im = cv2.resize(im, (self.imgsz, self.imgsz), interpolation=cv2.INTER_LINEAR)
+            im = skresize(im, (self.imgsz, self.imgsz)) #skimage
 
             # Add to buffer if training with augmentations
             if self.augment:

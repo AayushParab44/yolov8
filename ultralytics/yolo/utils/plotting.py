@@ -11,6 +11,7 @@ import torch
 from PIL import Image, ImageDraw, ImageFont
 from PIL import __version__ as pil_version
 from scipy.ndimage import gaussian_filter1d
+from skimage.transform import resize as skresize
 
 from ultralytics.yolo.utils import LOGGER, TryExcept, plt_settings, threaded
 
@@ -342,7 +343,8 @@ def plot_images(images,
     if scale < 1:
         h = math.ceil(scale * h)
         w = math.ceil(scale * w)
-        mosaic = cv2.resize(mosaic, tuple(int(x * ns) for x in (w, h)))
+        # mosaic = cv2.resize(mosaic, tuple(int(x * ns) for x in (w, h)))
+        mosaic = skresize(mosaic, tuple(int(x * ns) for x in (w, h))) #skimage
 
     # Annotate
     fs = int((h + w) * ns * 0.01)  # font size
@@ -415,7 +417,8 @@ def plot_images(images,
                         mh, mw = image_masks[j].shape
                         if mh != h or mw != w:
                             mask = image_masks[j].astype(np.uint8)
-                            mask = cv2.resize(mask, (w, h))
+                            # mask = cv2.resize(mask, (w, h))
+                            mask = skresize(mask, (w, h)) #skimage
                             mask = mask.astype(bool)
                         else:
                             mask = image_masks[j].astype(bool)

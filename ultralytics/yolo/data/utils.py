@@ -15,6 +15,7 @@ import cv2
 import numpy as np
 from PIL import ExifTags, Image, ImageOps
 from tqdm import tqdm
+from skimage.transform import resize as skresize
 
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.yolo.utils import (DATASETS_DIR, LOGGER, NUM_THREADS, ROOT, SETTINGS_YAML, clean_url, colorstr, emojis,
@@ -151,7 +152,8 @@ def polygon2mask(imgsz, polygons, color=1, downsample_ratio=1):
     nh, nw = (imgsz[0] // downsample_ratio, imgsz[1] // downsample_ratio)
     # NOTE: fillPoly firstly then resize is trying the keep the same way
     # of loss calculation when mask-ratio=1.
-    mask = cv2.resize(mask, (nw, nh))
+    # mask = cv2.resize(mask, (nw, nh))
+    mask = skresize(mask, (nw, nh)) #skimage
     return mask
 
 
@@ -467,7 +469,8 @@ def compress_one_image(f, f_new=None, max_dim=1920, quality=50):
         im_height, im_width = im.shape[:2]
         r = max_dim / max(im_height, im_width)  # ratio
         if r < 1.0:  # image too large
-            im = cv2.resize(im, (int(im_width * r), int(im_height * r)), interpolation=cv2.INTER_AREA)
+            # im = cv2.resize(im, (int(im_width * r), int(im_height * r)), interpolation=cv2.INTER_AREA)
+            im = skresize(im, (int(im_width * r), int(im_height * r))) #skimage
         cv2.imwrite(str(f_new or f), im)
 
 

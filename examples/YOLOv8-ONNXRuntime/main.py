@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 import torch
+from skimage.transform import resize as skresize
 
 from ultralytics.yolo.utils import ROOT, yaml_load
 from ultralytics.yolo.utils.checks import check_requirements, check_yaml
@@ -89,7 +90,8 @@ class Yolov8:
         img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
 
         # Resize the image to match the input shape
-        img = cv2.resize(img, (self.input_width, self.input_height))
+        # img = cv2.resize(img, (self.input_width, self.input_height))
+        img = skresize(img, (self.input_width, self.input_height)) #skimage
 
         # Normalize the image data by dividing it by 255.0
         image_data = np.array(img) / 255.0

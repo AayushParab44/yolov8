@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import torch
 import torchvision.transforms as T
+from skimage.transform import resize as skresize
 
 from ..utils import LOGGER, colorstr
 from ..utils.checks import check_version
@@ -578,7 +579,8 @@ class LetterBox:
             labels['ratio_pad'] = (labels['ratio_pad'], (dw, dh))  # for evaluation
 
         if shape[::-1] != new_unpad:  # resize
-            img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
+            # img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
+            img = skresize(img, new_unpad) #skimage
         top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
         left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
         img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT,
@@ -866,7 +868,8 @@ class ClassifyLetterBox:
         hs, ws = (math.ceil(x / self.stride) * self.stride for x in (h, w)) if self.auto else self.h, self.w
         top, left = round((hs - h) / 2 - 0.1), round((ws - w) / 2 - 0.1)
         im_out = np.full((self.h, self.w, 3), 114, dtype=im.dtype)
-        im_out[top:top + h, left:left + w] = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
+        # im_out[top:top + h, left:left + w] = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
+        im_out[top:top + h, left:left + w] = skresize(im, (w, h)) #skimage
         return im_out
 
 
@@ -881,7 +884,8 @@ class CenterCrop:
         imh, imw = im.shape[:2]
         m = min(imh, imw)  # min dimension
         top, left = (imh - m) // 2, (imw - m) // 2
-        return cv2.resize(im[top:top + m, left:left + m], (self.w, self.h), interpolation=cv2.INTER_LINEAR)
+        # return cv2.resize(im[top:top + m, left:left + m], (self.w, self.h), interpolation=cv2.INTER_LINEAR)
+        return skresize(im[top:top + m, left:left + m], (self.w, self.h)) #skimage
 
 
 class ToTensor:
