@@ -16,6 +16,7 @@ import numpy as np
 from PIL import ExifTags, Image, ImageOps
 from tqdm import tqdm
 from skimage.transform import resize as skresize
+from PIL import Image
 
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.yolo.utils import (DATASETS_DIR, LOGGER, NUM_THREADS, ROOT, SETTINGS_YAML, clean_url, colorstr, emojis,
@@ -152,8 +153,22 @@ def polygon2mask(imgsz, polygons, color=1, downsample_ratio=1):
     nh, nw = (imgsz[0] // downsample_ratio, imgsz[1] // downsample_ratio)
     # NOTE: fillPoly firstly then resize is trying the keep the same way
     # of loss calculation when mask-ratio=1.
+
     # mask = cv2.resize(mask, (nw, nh))
-    mask = skresize(mask, (nw, nh)) #skimage
+    # # mask = skresize(mask, (nw, nh)) #skimage
+
+    #Using PIL
+    print("Using PIL ultralytics/yolo/data/utils.py")
+    # Convert the mask to PIL format
+    pil_mask = Image.fromarray(cv2.cvtColor(mask, cv2.COLOR_BGR2RGB))
+
+    # Resize the mask using PIL
+    resized_mask = pil_mask.resize((nw, nh), resample=Image.LANCZOS)
+    resized_mask=np.array(resized_mask, dtype=np.uint8)
+
+    # Convert the resized mask back to OpenCV format (BGR)
+    mask = cv2.cvtColor(np.array(resized_mask), cv2.COLOR_RGB2BGR)
+
     return mask
 
 
@@ -470,7 +485,21 @@ def compress_one_image(f, f_new=None, max_dim=1920, quality=50):
         r = max_dim / max(im_height, im_width)  # ratio
         if r < 1.0:  # image too large
             # im = cv2.resize(im, (int(im_width * r), int(im_height * r)), interpolation=cv2.INTER_AREA)
-            im = skresize(im, (int(im_width * r), int(im_height * r))) #skimage
+            # im = skresize(im, (int(im_width * r), int(im_height * r))) #skimage
+            #using PIL 
+            print("Using PIL 2nd utils")
+            # Convert the image to PIL format (BGR)
+            pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+
+            # Calculate the new width and height after resizing
+            new_size = (int(im_width * r), int(im_height * r))
+
+            # Resize the image using PIL
+            resized_image = pil_image.resize(new_size, resample=Image.LANCZOS)
+
+            # Convert the resized image back to OpenCV format (BGR)
+            im = cv2.cvtColor(np.array(resized_image, dtype=np.uint8), cv2.COLOR_RGB2BGR)
+
         cv2.imwrite(str(f_new or f), im)
 
 

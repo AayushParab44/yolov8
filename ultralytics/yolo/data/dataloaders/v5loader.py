@@ -752,9 +752,20 @@ class LoadImagesAndLabels(Dataset):
             h0, w0 = im.shape[:2]  # orig hw
             r = self.img_size / max(h0, w0)  # ratio
             if r != 1:  # if sizes are not equal
-                interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
+                # interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
                 # im = cv2.resize(im, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
-                im = skresize(im, (math.ceil(w0 * r), math.ceil(h0 * r))) #skimage
+                # # im = skresize(im, (math.ceil(w0 * r), math.ceil(h0 * r))) #skimage
+                #using PIL
+                print("Using PIL v5loader")
+                interp = Image.LANCZOS if (self.augment or r > 1) else Image.LANCZOS
+                target_size = (math.ceil(w0 * r), math.ceil(h0 * r))
+                pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+                # Resize the image using PIL with the determined interpolation
+                resized_image = pil_image.resize(target_size, resample=interp)
+
+                # Convert the resized image back to OpenCV format (BGR)
+                im = cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
+
             return im, (h0, w0), im.shape[:2]  # im, hw_original, hw_resized
         return self.ims[i], self.im_hw0[i], self.im_hw[i]  # im, hw_original, hw_resized
 

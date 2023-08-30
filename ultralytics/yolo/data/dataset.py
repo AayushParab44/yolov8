@@ -8,12 +8,16 @@ import cv2
 import numpy as np
 import torch
 import torchvision
+import torchvision.transforms as transforms
 from tqdm import tqdm
 
 from ..utils import LOCAL_RANK, NUM_THREADS, TQDM_BAR_FORMAT, is_dir_writeable
 from .augment import Compose, Format, Instances, LetterBox, classify_albumentations, classify_transforms, v8_transforms
 from .base import BaseDataset
 from .utils import HELP_URL, LOGGER, get_hash, img2label_paths, verify_image_label
+
+import torch
+import torch.nn.functional as F
 
 
 class YOLODataset(BaseDataset):
@@ -179,6 +183,9 @@ class YOLODataset(BaseDataset):
         label['instances'] = Instances(bboxes, segments, keypoints, bbox_format=bbox_format, normalized=normalized)
         return label
 
+
+# the original collate function -->>
+
     @staticmethod
     def collate_fn(batch):
         """Collates data samples into batches."""
@@ -188,7 +195,7 @@ class YOLODataset(BaseDataset):
         for i, k in enumerate(keys):
             value = values[i]
             if k == 'img':
-                value = torch.stack(value, 0)
+                value = torch.stack(value, 0) #
             if k in ['masks', 'keypoints', 'bboxes', 'cls']:
                 value = torch.cat(value, 0)
             new_batch[k] = value
@@ -197,6 +204,156 @@ class YOLODataset(BaseDataset):
             new_batch['batch_idx'][i] += i  # add target image index for build_targets()
         new_batch['batch_idx'] = torch.cat(new_batch['batch_idx'], 0)
         return new_batch
+
+# modified collate -->>
+
+    
+
+    # @staticmethod
+    # def collate_fn(batch):
+    #     """Collates data samples into batches with padding."""
+    #     new_batch = {}
+    #     keys = batch[0].keys()
+    #     values = list(zip(*[list(b.values()) for b in batch]))
+    #     print("\nBATCH\n",batch)
+    #     print("\nKEYS\n",keys)
+    #     print("\nVALUES\n",values,"\n\n")
+        
+    #     try:
+    #         ## Find the max H and W among all images in the batch
+    #         max_height = max([value.shape[1] for value in values if value is not None and isinstance(value, torch.Tensor)])
+    #         max_width = max([value.shape[2] for value in values if value is not None and isinstance(value, torch.Tensor)])
+
+    #         for i, k in enumerate(keys):
+    #             value = values[i]
+
+    #             if k == 'img':
+    #                 # Pad images to the max H and W
+    #                 padded_images = []
+    #                 for img in value:
+    #                     if img is not None:
+    #                         padded_img = F.pad(img, pad=(0, max_width - img.shape[2], 0, max_height - img.shape[1]), mode='constant', value=0)
+    #                         padded_images.append(padded_img)
+    #                     else:
+    #                         padded_images.append(None)
+    #                 value = torch.stack(padded_images, dim=0) if any(padded_images) else None
+
+    #             if k in ['masks', 'keypoints', 'bboxes', 'cls']:
+    #                 value = torch.cat(value, dim=0)
+
+    #             new_batch[k] = value
+
+    #         new_batch['batch_idx'] = list(new_batch['batch_idx'])
+    #         for i in range(len(new_batch['batch_idx'])):
+    #             new_batch['batch_idx'][i] += i  # add target image index for build_targets()
+    #         new_batch['batch_idx'] = torch.cat(new_batch['batch_idx'], dim=0)
+    #     except Exception as e:
+    #         # Print the path of the image where the error occurred
+    #         print("\nError occurred in collate_fn. Image path:", batch[0]['im_file'])
+    #         print(repr(e))
+    #         import traceback
+    #         traceback.print_exc()
+    #         raise e
+
+    #     return new_batch
+
+
+
+
+
+    # @staticmethod
+    # def collate_fn(batch):
+    #     """Collates data samples into batches."""
+    #     new_batch = {}
+    #     keys = batch[0].keys()
+    #     values = list(zip(*[list(b.values()) for b in batch]))
+        
+    #     try:
+    #         for i, k in enumerate(keys):
+    #             value = values[i]
+                
+    #             # if k == 'img':
+    #             #     value = torch.stack(value, 0) #original implementation
+                
+                
+    #             if k == 'img':
+    #             # Check if all tensors have the same height and width
+    #               sizes = [tensor.shape[1:] for tensor in value]
+    #               if len(set(sizes)) > 1:
+    #                   valid_batch = False  # Mark batch as invalid
+    #                   break
+
+    #               # Resize tensors to a consistent size
+    #               max_height = max([size[0] for size in sizes])
+    #               max_width = max([size[1] for size in sizes])
+    #               resized_tensors = [torch.nn.functional.pad(tensor, (0, max_width - size[1], 0, max_height - size[0]))
+    #                                 for tensor, size in zip(value, sizes)]
+    #               value = torch.stack(resized_tensors, 0)
+    #             if k in ['masks', 'keypoints', 'bboxes', 'cls']:
+    #                 value = torch.cat(value, 0)
+    #             new_batch[k] = value
+    #         new_batch['batch_idx'] = list(new_batch['batch_idx'])
+    #         for i in range(len(new_batch['batch_idx'])):
+    #             new_batch['batch_idx'][i] += i  # add target image index for build_targets()
+    #         new_batch['batch_idx'] = torch.cat(new_batch['batch_idx'], 0)
+    #     except Exception as e:
+    #         # Print the path of the image where the error occurred
+    #         print("\nError occurred in collate_fn. Image path:",batch[0]['im_file'])
+    #         print(repr(e))
+    #         import traceback 
+    #         traceback.print_exc()
+    #         raise e
+    #     return new_batch
+
+
+    # @staticmethod
+    # def collate_fn(batch):
+    #     """Collates data samples into batches."""
+    #     new_batch = {}
+    #     keys = batch[0].keys()
+    #     values = list(zip(*[list(b.values()) for b in batch]))
+    #     valid_indices = []  # List to store indices of valid images in the batch
+    #     # sizes=list()
+    #     try:
+    #         for i, k in enumerate(keys):
+    #             value = values[i]
+    #             if k == 'img':
+    #                 # Check if all tensors have the same size
+    #                 sizes = [tensor.size() for tensor in value]
+    #                 if len(set(sizes)) > 1:
+    #                     continue  # Skip collating this image if tensor sizes are not consistent
+    #                 else:
+    #                     value = torch.stack(value, 0)
+    #             if k in ['masks', 'keypoints', 'bboxes', 'cls']:
+    #                 # value = torch.cat(value, 0)
+    #                 if value.size(0) == 0:
+    #                     continue  # Skip collating this image if tensor size is 0
+    #                 else:
+    #                     value = torch.cat(value, 0)
+    #             new_batch[k] = value
+    #             valid_indices.append(i)  # Keep track of the indices of valid images
+    #         new_batch['batch_idx'] = list(new_batch['batch_idx'])
+    #         for i in range(len(new_batch['batch_idx'])):
+    #             new_batch['batch_idx'][i] += i  # add target image index for build_targets()
+    #         new_batch['batch_idx'] = torch.cat(new_batch['batch_idx'], 0)
+    #     except Exception as e:
+    #         # Print the path of the image where the error occurred
+    #         print("\nError occurred in collate_fn. Image path:",batch[0]['im_file'])
+    #         print(repr(e))
+    #         import traceback 
+    #         traceback.print_exc()
+    #         raise e
+
+    #     if len(valid_indices) == 0:
+    #         # If no valid images are found, return an empty dictionary
+    #         return {}
+
+    #     # Filter out the invalid images from the new_batch using valid_indices
+    #     new_batch = {k: v[valid_indices] for k, v in new_batch.items()}
+
+    #     return new_batch
+
+
 
 
 # Classification dataloaders -------------------------------------------------------------------------------------------

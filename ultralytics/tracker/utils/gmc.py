@@ -5,6 +5,7 @@ import copy
 import cv2
 import numpy as np
 from skimage.transform import resize as skresize
+from PIL import Image
 
 from ultralytics.yolo.utils import LOGGER
 
@@ -95,7 +96,19 @@ class GMC:
         if self.downscale > 1.0:
             frame = cv2.GaussianBlur(frame, (3, 3), 1.5)
             # frame = cv2.resize(frame, (width // self.downscale, height // self.downscale))
-            frame = skresize(frame, (width // self.downscale, height // self.downscale)) #skimage
+            # frame = skresize(frame, (width // self.downscale, height // self.downscale)) #skimage
+            #Using PIL
+            print("Using PIL")
+            # Convert the frame to PIL format (grayscale)
+            pil_frame = Image.fromarray(frame)
+
+            # Resize the frame using PIL
+            resized_frame = pil_frame.resize((width // self.downscale, height // self.downscale), resample=Image.LANCZOS)
+
+            # Convert the resized frame back to OpenCV format (grayscale)
+            resized_frame = cv2.cvtColor(np.array(resized_frame), cv2.COLOR_GRAY2BGR)
+            frame = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2GRAY)
+
             width = width // self.downscale
             height = height // self.downscale
 
@@ -126,9 +139,22 @@ class GMC:
 
         # Downscale image (TODO: consider using pyramids)
         if self.downscale > 1.0:
-            # frame = cv2.GaussianBlur(frame, (3, 3), 1.5)
+            # frame = cv2.GaussianBlur(frame, (3, 3), 1.5) #keep commented out as in og ultralytics
             # frame = cv2.resize(frame, (width // self.downscale, height // self.downscale))
-            frame = skresize(frame, (width // self.downscale, height // self.downscale)) #skresize
+            # frame = skresize(frame, (width // self.downscale, height // self.downscale)) #skresize
+
+            #Using PIL
+            print("Using PIL")
+            # Convert the frame to PIL format (grayscale)
+            pil_frame = Image.fromarray(frame)
+
+            # Resize the frame using PIL
+            resized_frame = pil_frame.resize((width // self.downscale, height // self.downscale), resample=Image.LANCZOS)
+
+            # Convert the resized frame back to OpenCV format (grayscale)
+            resized_frame = cv2.cvtColor(np.array(resized_frame), cv2.COLOR_GRAY2BGR)
+            frame = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2GRAY)
+
             width = width // self.downscale
             height = height // self.downscale
 
@@ -255,8 +281,21 @@ class GMC:
         # Downscale image
         if self.downscale > 1.0:
             # frame = cv2.GaussianBlur(frame, (3, 3), 1.5)
+
             # frame = cv2.resize(frame, (width // self.downscale, height // self.downscale))
-            frame = skresize(frame, (width // self.downscale, height // self.downscale)) #skimage
+            # frame = skresize(frame, (width // self.downscale, height // self.downscale)) #skimage
+            
+            #Using PIL
+            print("Using PIL")
+            # Convert the frame to PIL format (grayscale)
+            pil_frame = Image.fromarray(frame)
+
+            # Resize the frame using PIL
+            resized_frame = pil_frame.resize((width // self.downscale, height // self.downscale), resample=Image.LANCZOS)
+
+            # Convert the resized frame back to OpenCV format (grayscale)
+            resized_frame = cv2.cvtColor(np.array(resized_frame), cv2.COLOR_GRAY2BGR)
+            frame = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2GRAY)
 
         # Find the keypoints
         keypoints = cv2.goodFeaturesToTrack(frame, mask=None, **self.feature_params)

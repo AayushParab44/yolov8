@@ -11,6 +11,7 @@ import torch
 import torch.nn.functional as F
 import torchvision
 from skimage.transform import resize as skresize
+from PIL import Image 
 
 from ultralytics.yolo.utils import LOGGER
 
@@ -341,7 +342,18 @@ def scale_image(masks, im0_shape, ratio_pad=None):
     # masks = F.interpolate(masks[None], im0_shape[:2], mode='bilinear', align_corners=False)[0]
     # masks = masks.permute(1, 2, 0).contiguous()
     # masks = cv2.resize(masks, (im0_shape[1], im0_shape[0]))
-    masks = skresize(masks, (im0_shape[1], im0_shape[0])) #skimage
+    # # masks = skresize(masks, (im0_shape[1], im0_shape[0])) #skimage
+
+    #Using PIL 
+    print("Using PIL yolov8/ultralytics/yolo/utils/ops.py")
+    pil_masks = Image.fromarray( cv2.cvtColor(masks, cv2.COLOR_BGR2RGB))
+
+    # Resize the masks using PIL
+    resized_masks = pil_masks.resize((im0_shape[1], im0_shape[0]), resample=Image.LANCZOS)
+    resized_masks=np.array(resized_masks, dtype=np.uint8)
+    # Convert the resized masks back to OpenCV format (BGR)
+    masks = cv2.cvtColor(resized_masks, cv2.COLOR_RGB2BGR)
+
     if len(masks.shape) == 2:
         masks = masks[:, :, None]
 

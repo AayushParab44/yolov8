@@ -12,6 +12,7 @@ import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 from skimage.transform import resize as skresize
+from PIL import Image
 
 from ultralytics.yolo.utils import LOGGER, colorstr
 from ultralytics.yolo.utils.checks import check_version
@@ -140,7 +141,18 @@ def letterbox(im, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleF
 
     if shape[::-1] != new_unpad:  # resize
         # im = cv2.resize(im, new_unpad, interpolation=cv2.INTER_LINEAR)
-        im = skresize(im, new_unpad) #skimage
+        # im = skresize(im, new_unpad) #skimage
+        #Using PIL
+        print("Using PIL v5augmentations")
+        # Convert the image to PIL format (BGR)
+        pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+
+        # Resize the image using PIL with LANCZOS interpolation
+        resized_image = pil_image.resize(new_unpad, resample=Image.LANCZOS)
+
+        # Convert the resized image back to OpenCV format (BGR)
+        im = cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
+
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
     im = cv2.copyMakeBorder(im, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
@@ -377,7 +389,22 @@ class LetterBox:
         top, left = round((hs - h) / 2 - 0.1), round((ws - w) / 2 - 0.1)
         im_out = np.full((self.h, self.w, 3), 114, dtype=im.dtype)
         # im_out[top:top + h, left:left + w] = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
-        im_out[top:top + h, left:left + w] = skresize(im, (w, h)) #skimage
+        # im_out[top:top + h, left:left + w] = skresize(im, (w, h)) #skimage
+
+        #Using PIL
+        print("Using PIL v5augmentations")
+        # Convert the image to PIL format (BGR)
+        pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+
+        # Resize the image using PIL with LANCZOS interpolation
+        resized_image = pil_image.resize((w, h), resample=Image.LANCZOS)
+
+        # Convert the resized image back to OpenCV format (BGR)
+        resized_im = cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
+
+        # Replace the line with the resized image
+        im_out[top:top + h, left:left + w] = resized_im
+
         return im_out
 
 
@@ -389,11 +416,30 @@ class CenterCrop:
         self.h, self.w = (size, size) if isinstance(size, int) else size
 
     def __call__(self, im):  # im = np.array HWC
-        imh, imw = im.shape[:2]
-        m = min(imh, imw)  # min dimension
-        top, left = (imh - m) // 2, (imw - m) // 2
+        # imh, imw = im.shape[:2]
+        # m = min(imh, imw)  # min dimension
+        # top, left = (imh - m) // 2, (imw - m) // 2
         # return cv2.resize(im[top:top + m, left:left + m], (self.w, self.h), interpolation=cv2.INTER_LINEAR)
-        return skresize(im[top:top + m, left:left + m], (self.w, self.h)) #skimage
+        # # return skresize(im[top:top + m, left:left + m], (self.w, self.h)) #skimage
+        #Using PIL
+        print("Using PIL v5augmentations")
+        # Convert the image to PIL format (BGR)
+        pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+
+        # Calculate the coordinates for center cropping
+        imw, imh = pil_image.size
+        m = min(imh, imw)
+        top, left = (imh - m) // 2, (imw - m) // 2
+
+        # Crop the center region of the image using PIL
+        cropped_image = pil_image.crop((left, top, left + m, top + m))
+
+        # Resize the cropped image using PIL with LANCZOS interpolation
+        resized_image = cropped_image.resize((self.w, self.h), resample=Image.LANCZOS)
+
+        # Convert the resized image back to OpenCV format (BGR)
+        resized_im = cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
+        return resized_im
 
 
 class ToTensor:

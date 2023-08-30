@@ -56,6 +56,7 @@ class Annotator:
         self.pil = pil or non_ascii
         if self.pil:  # use PIL
             self.im = im if isinstance(im, Image.Image) else Image.fromarray(im)
+            # self.im=Image.fromarray((im * 255).astype(np.uint8))
             self.draw = ImageDraw.Draw(self.im)
             try:
                 font = check_font('Arial.Unicode.ttf' if non_ascii else font)
@@ -344,7 +345,17 @@ def plot_images(images,
         h = math.ceil(scale * h)
         w = math.ceil(scale * w)
         # mosaic = cv2.resize(mosaic, tuple(int(x * ns) for x in (w, h)))
-        mosaic = skresize(mosaic, tuple(int(x * ns) for x in (w, h))) #skimage
+        # mosaic = skresize(mosaic, tuple(int(x * ns) for x in (w, h))) #skimage
+        #using PIL
+        print("Using PIL plotting.py")
+        # img_rgb=cv2.cvtColor(mosaic,  cv2.COLOR_BGR2RGB)
+        pil_mosaic = Image.fromarray( cv2.cvtColor(mosaic, cv2.COLOR_BGR2RGB))
+        resized_mosaic = pil_mosaic.resize(tuple(int(x * ns) for x in (w, h)), resample=Image.LANCZOS)
+        ### mosaic = cv2.cvtColor(resized_mosaic, cv2.COLOR_RGB2BGR)
+        resized_mosaic = np.array(resized_mosaic, dtype=np.uint8)
+        # Convert the resized mosaic back to OpenCV format (BGR)
+        mosaic = cv2.cvtColor(resized_mosaic, cv2.COLOR_RGB2BGR)
+
 
     # Annotate
     fs = int((h + w) * ns * 0.01)  # font size
@@ -418,7 +429,16 @@ def plot_images(images,
                         if mh != h or mw != w:
                             mask = image_masks[j].astype(np.uint8)
                             # mask = cv2.resize(mask, (w, h))
-                            mask = skresize(mask, (w, h)) #skimage
+                            # mask = skresize(mask, (w, h)) #skimage
+
+                            #using PIL
+                            print("Using PIL 2nd plotting.py")
+                            # img_rgb=cv2.cvtColor(mask,  cv2.COLOR_BGR2RGB)
+                            pil_mask = Image.fromarray( cv2.cvtColor(mask, cv2.COLOR_BGR2RGB))
+                            resized_mask = pil_mask.resize((w, h), resample=Image.LANCZOS)
+                            resized_mask = np.array(resized_mask, dtype=np.uint8)
+                            mask = cv2.cvtColor(resized_mask, cv2.COLOR_RGB2BGR)
+
                             mask = mask.astype(bool)
                         else:
                             mask = image_masks[j].astype(bool)

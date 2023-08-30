@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import torch
 from skimage.transform import resize as skresize
+from PIL import Image
 
 from ultralytics.yolo.data import YOLODataset
 from ultralytics.yolo.data.augment import Compose, Format, v8_transforms
@@ -34,7 +35,17 @@ class RTDETRDataset(YOLODataset):
                     raise FileNotFoundError(f'Image Not Found {f}')
             h0, w0 = im.shape[:2]  # orig hw
             # im = cv2.resize(im, (self.imgsz, self.imgsz), interpolation=cv2.INTER_LINEAR)
-            im = skresize(im, (self.imgsz, self.imgsz)) #skimage
+            # # im = skresize(im, (self.imgsz, self.imgsz)) #skimage
+
+            
+            # Convert the image to PIL format (BGR)
+            pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+
+            # Resize the image using PIL with LANCZOS interpolation
+            resized_image = pil_image.resize((self.imgsz, self.imgsz), resample=Image.LANCZOS)
+
+            # Convert the resized image back to OpenCV format (BGR)
+            im = cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
 
             # Add to buffer if training with augmentations
             if self.augment:

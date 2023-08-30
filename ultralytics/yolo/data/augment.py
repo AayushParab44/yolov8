@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import torchvision.transforms as T
 from skimage.transform import resize as skresize
+from PIL import Image
 
 from ..utils import LOGGER, colorstr
 from ..utils.checks import check_version
@@ -580,7 +581,21 @@ class LetterBox:
 
         if shape[::-1] != new_unpad:  # resize
             # img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
-            img = skresize(img, new_unpad) #skimage
+            # # img = skresize(img, new_unpad) #skimage
+            #Using PIL
+            print("Using PIL augment.py")
+            # Convert the image to PIL format (BGR)
+            pil_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+
+            # Resize the image using PIL with the specified interpolation
+            resized_image = pil_image.resize(new_unpad, resample=Image.LANCZOS)
+
+            # Convert the resized image back to OpenCV format (BGR)
+            resized_img = cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
+
+            # Update the 'img' value
+            img = resized_img
+
         top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
         left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
         img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT,
@@ -869,7 +884,15 @@ class ClassifyLetterBox:
         top, left = round((hs - h) / 2 - 0.1), round((ws - w) / 2 - 0.1)
         im_out = np.full((self.h, self.w, 3), 114, dtype=im.dtype)
         # im_out[top:top + h, left:left + w] = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
-        im_out[top:top + h, left:left + w] = skresize(im, (w, h)) #skimage
+        # im_out[top:top + h, left:left + w] = skresize(im, (w, h)) #skimage
+
+        #Using PIL 
+        print("Using PIL augment.py")
+        pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+        resized_image = pil_image.resize((w, h), resample=Image.LANCZOS)
+        resized_image = cv2.cvtColor(im_out, cv2.COLOR_RGB2BGR)
+        im_out[top:top + h, left:left + w]=resized_image
+
         return im_out
 
 
@@ -884,8 +907,24 @@ class CenterCrop:
         imh, imw = im.shape[:2]
         m = min(imh, imw)  # min dimension
         top, left = (imh - m) // 2, (imw - m) // 2
+
         # return cv2.resize(im[top:top + m, left:left + m], (self.w, self.h), interpolation=cv2.INTER_LINEAR)
-        return skresize(im[top:top + m, left:left + m], (self.w, self.h)) #skimage
+        # # return skresize(im[top:top + m, left:left + m], (self.w, self.h)) #skimage
+
+        #using PIL
+        print("Using PIL augment.py")
+        # Convert the image to PIL format (BGR)
+        pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+
+        # Crop the center region of the image using PIL
+        cropped_image = pil_image.crop((left, top, left + m, top + m))
+
+        # Resize the cropped image using PIL with bilinear interpolation
+        resized_image = cropped_image.resize((self.w, self.h), resample=Image.BILINEAR)
+
+        # Convert the resized image back to OpenCV format (BGR)
+        resized_im = cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
+        return resized_im
 
 
 class ToTensor:

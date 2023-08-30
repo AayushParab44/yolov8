@@ -15,6 +15,7 @@ import psutil
 from torch.utils.data import Dataset
 from tqdm import tqdm
 from skimage.transform import resize as skresize
+from PIL import Image
 
 from ..utils import DEFAULT_CFG, LOCAL_RANK, LOGGER, NUM_THREADS, TQDM_BAR_FORMAT
 from .utils import HELP_URL, IMG_FORMATS
@@ -154,11 +155,24 @@ class BaseDataset(Dataset):
             h0, w0 = im.shape[:2]  # orig hw
             r = self.imgsz / max(h0, w0)  # ratio
             if r != 1:  # if sizes are not equal
-                interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
+                # interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
                 # im = cv2.resize(im, (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz)),
                 #                 interpolation=interp)
-                im = skresize(im, (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz))
-                              ) #skimage
+                # im = skresize(im, (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz))
+                #               ) #skimage
+
+                #Using PIL
+                # print("Using PIL base.py")
+                # Determine the interpolation method for resizing
+                interp = Image.LANCZOS if (self.augment or r > 1) else Image.LANCZOS
+                # Convert the image to PIL format (BGR)
+                pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+                # Resize the image using PIL with the specified interpolation
+                resized_image = pil_image.resize((min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz)), resample=interp)
+
+                # Convert the resized image back to OpenCV format (BGR)
+                im = cv2.cvtColor(np.array(resized_image, dtype=np.uint8), cv2.COLOR_RGB2BGR)
+
 
             # Add to buffer if training with augmentations
             if self.augment:

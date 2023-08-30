@@ -72,7 +72,19 @@ def test_predict_img():
     # Test tensor inference
     im = cv2.imread(str(SOURCE))  # OpenCV
     # t = cv2.resize(im, (32, 32))
-    t = skresize(im, (32, 32)) #skimage
+    # # t = skresize(im, (32, 32)) #skimage
+
+    #Using PIL
+    print("Using PIL")
+    # Convert the image to PIL format (RGB)
+    pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+
+    # Resize the image using PIL
+    resized_image = pil_image.resize((32, 32), resample=Image.LANCZOS)
+
+    # Convert the resized image back to OpenCV format (BGR)
+    t = cv2.cvtColor(np.array(resized_image), cv2.COLOR_RGB2BGR)
+
     t = ToTensor()(t)
     t = torch.stack([t, t, t, t])
     results = model(t, visualize=True)

@@ -34,6 +34,7 @@ import cv2
 import numpy as np
 import torch
 from skimage.transform import resize as skresize
+from PIL import Image
 
 from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.yolo.cfg import get_cfg
