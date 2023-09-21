@@ -432,7 +432,7 @@ def plot_images(images,
                             # mask = skresize(mask, (w, h)) #skimage
 
                             #using PIL
-                            print("Using PIL 2nd plotting.py")
+                            # print("Using PIL 2nd plotting.py")
                             # img_rgb=cv2.cvtColor(mask,  cv2.COLOR_BGR2RGB)
                             pil_mask = Image.fromarray( cv2.cvtColor(mask, cv2.COLOR_BGR2RGB))
                             resized_mask = pil_mask.resize((w, h), resample=Image.LANCZOS)
