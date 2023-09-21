@@ -158,7 +158,7 @@ def polygon2mask(imgsz, polygons, color=1, downsample_ratio=1):
     # # mask = skresize(mask, (nw, nh)) #skimage
 
     #Using PIL
-    print("Using PIL ultralytics/yolo/data/utils.py")
+    # print("Using PIL ultralytics/yolo/data/utils.py")
     # Convert the mask to PIL format
     pil_mask = Image.fromarray(cv2.cvtColor(mask, cv2.COLOR_BGR2RGB))
 
@@ -491,7 +491,7 @@ def compress_one_image(f, f_new=None, max_dim=1920, quality=50):
             # im = cv2.resize(im, (int(im_width * r), int(im_height * r)), interpolation=cv2.INTER_AREA)
             # im = skresize(im, (int(im_width * r), int(im_height * r))) #skimage
             #using PIL 
-            print("Using PIL 2nd utils")
+            # print("Using PIL 2nd utils")
             # Convert the image to PIL format (BGR)
             pil_image = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
 
