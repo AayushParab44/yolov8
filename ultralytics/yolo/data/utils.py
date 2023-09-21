@@ -202,6 +202,10 @@ def polygons2masks_overlap(imgsz, segments, downsample_ratio=1):
     ms = np.array(ms)[index]
     for i in range(len(segments)):
         mask = ms[i] * (i + 1)
+        rgb_array = np.array(mask)
+        # Convert RGB to grayscale by taking the average of color channels
+        grayscale_array = np.mean(rgb_array, axis=2)
+        mask=grayscale_array
         masks = masks + mask
         masks = np.clip(masks, a_min=0, a_max=i + 1)
     return masks, index
